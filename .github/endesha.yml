@@ -1,0 +1,57 @@
+name: Otomatiki ya Wallet
+
+on:
+  workflow_dispatch:
+
+jobs:
+  jenga_mafaili:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Vuta Repository Yako
+        uses: actions/checkout@v3
+
+      - name: Weka Python na Ugawanye Anwani
+        run: |
+          python -c '
+          import os
+          import requests
+
+          url_ya_orodha = "https://raw.githubusercontent.com/ita02/Munge/main/orodha_ya_anwani.txt"
+          print("Inachukua faili la anwani...")
+          response = requests.get(url_ya_orodha)
+          
+          if response.status_code == 200:
+              anwani_zote = [line.strip() for line in response.text.splitlines() if line.strip()]
+              print(f"Jumla ya anwani: {len(anwani_zote)}")
+              
+              idadi_ya_wallet = 100
+              mafaili_kwa_kila_wallet = 5
+              ukubwa_wa_faili = 100
+              index = 0
+              
+              for w in range(1, idadi_ya_wallet + 1):
+                  wallet_folder = f"wallet_{w}"
+                  os.makedirs(wallet_folder, exist_ok=True)
+                  
+                  for f_num in range(1, mafaili_kwa_kila_wallet + 1):
+                      chunk = anwani_zote[index: index + ukubwa_wa_faili]
+                      index += ukubwa_wa_faili
+                      
+                      if not chunk:
+                          break
+                          
+                      faili_jina = os.path.join(wallet_folder, f"kundi_{f_num}.txt")
+                      with open(faili_jina, "w", encoding="utf-8") as out:
+                          out.write("\n".join(chunk))
+              print("Kila kitu kimekamilika na folda zimetengenezwa!")
+          else:
+              print(f"Imeshindikana kupata faili, kosa: {response.status_code}")
+          '
+
+      - name: Hifadhi Kwenye GitHub Yako
+        run: |
+          git config --global user.name "GitHub Action Bot"
+          git config --global user.email "bot@github.com"
+          git add wallet_*
+          git commit -m "Sasisho la folda za wallet na anwani" || echo "Hakuna mabadiliko"
+          git push

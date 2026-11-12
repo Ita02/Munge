@@ -3,27 +3,36 @@ name: Otomatiki ya Wallet
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   jenga_mafaili:
     runs-on: ubuntu-latest
     steps:
       - name: Vuta Repository Yako
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Weka Python na Ugawanye Anwani
         run: |
           python -c '
           import os
-          import requests
+          import urllib.request
 
-          url_ya_orodha = "https://raw.githubusercontent.com/ita02/Munge/main/orodha_ya_anwani.txt"
-          print("Inachukua faili la anwani...")
-          response = requests.get(url_ya_orodha)
+          url = "https://raw.githubusercontent.com/ita02/Munge/main/orodha_ya_anwani.txt"
+          print("Inapakua orodha ya anwani...")
           
-          if response.status_code == 200:
-              anwani_zote = [line.strip() for line in response.text.splitlines() if line.strip()]
-              print(f"Jumla ya anwani: {len(anwani_zote)}")
-              
+          try:
+              with urllib.request.urlopen(url) as response:
+                  html = response.read().decode("utf-8")
+                  anwani_zote = [line.strip() for line in html.splitlines() if line.strip()]
+          except Exception as e:
+              print(f"Imeshindikana kupakua faili: {e}")
+              anwani_zote = []
+          
+          print(f"Jumla ya anwani zilizopatikana: {len(anwani_zote)}")
+          
+          if len(anwani_zote) > 0:
               idadi_ya_wallet = 100
               mafaili_kwa_kila_wallet = 5
               ukubwa_wa_faili = 100
@@ -43,15 +52,15 @@ jobs:
                       faili_jina = os.path.join(wallet_folder, f"kundi_{f_num}.txt")
                       with open(faili_jina, "w", encoding="utf-8") as out:
                           out.write("\n".join(chunk))
-              print("Kila kitu kimekamilika na folda zimetengenezwa!")
+              print("Folda na mafaili yametengenezwa kikamilifu!")
           else:
-              print(f"Imeshindikana kupata faili, kosa: {response.status_code}")
+              print("Orodha ya anwani ni tupu au haikusomeka.")
           '
 
       - name: Hifadhi Kwenye GitHub Yako
         run: |
           git config --global user.name "GitHub Action Bot"
           git config --global user.email "bot@github.com"
-          git add wallet_*
-          git commit -m "Sasisho la folda za wallet na anwani" || echo "Hakuna mabadiliko"
+          git add .
+          git commit -m "Ongeza folda za wallet na anwani zake moja kwa moja" || echo "Hakuna mabadiliko ya kuhifadhi"
           git push
